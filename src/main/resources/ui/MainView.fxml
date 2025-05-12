@@ -17,6 +17,7 @@
             <Label text="Programmation Java - Exceptions" styleClass="header-label"/>
             <Label text="Tournoi de volley-ball" styleClass="header-label"/>
             <Label text="Ahmed Errebache &amp; Lucas Charpentier" styleClass="header-label"/>
+            <Label fx:id="countdownLabel" text="Chargement du temps..." styleClass="header-label"/>
         </VBox>
     </top>
 

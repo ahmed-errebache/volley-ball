@@ -1,13 +1,19 @@
 package ui;
 
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import model.Player;
 import model.Team;
 import service.TournamentRegistration;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,13 +21,43 @@ public class MainController {
     @FXML private TextField teamNameField;
     @FXML private VBox playersBox;
     @FXML private TilePane cardsPane;
+    @FXML private Label countdownLabel;
 
     private final TournamentRegistration reg = new TournamentRegistration();
     private int playerCount = 0;
+    private final LocalDateTime deadline = LocalDateTime.of(2025, 5, 16, 23, 59);
 
     @FXML
     public void initialize() {
         addPlayerRow();
+        startCountdown();
+    }
+
+    private void startCountdown() {
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.seconds(1), e -> updateCountdown())
+        );
+        timeline.setCycleCount(Animation.INDEFINITE);
+        timeline.play();
+    }
+
+    private void updateCountdown() {
+        LocalDateTime now = LocalDateTime.now();
+        java.time.Duration duration = java.time.Duration.between(now, deadline);
+
+        if (!duration.isNegative()) {
+            long days = duration.toDays();
+            long hours = duration.toHours() % 24;
+            long minutes = duration.toMinutes() % 60;
+            long seconds = duration.getSeconds() % 60;
+
+            Platform.runLater(() -> countdownLabel.setText(
+                    String.format("⏳ Fin des inscriptions dans : %d j %02d h %02d min %02d s",
+                            days, hours, minutes, seconds)
+            ));
+        } else {
+            Platform.runLater(() -> countdownLabel.setText("❌ Inscriptions terminées."));
+        }
     }
 
     @FXML
@@ -71,24 +107,32 @@ public class MainController {
             return;
         }
         Set<String> seen = new HashSet<>();
+        Team t = new Team(name);
+
         for (Node node : playersBox.getChildren()) {
             HBox r = (HBox) node;
             String fn = ((TextField)r.getChildren().get(0)).getText().trim();
             String ln = ((TextField)r.getChildren().get(1)).getText().trim();
             String key = fn.toLowerCase()+":"+ln.toLowerCase();
+
             if (seen.contains(key)) {
-                showAlert(Alert.AlertType.ERROR, "Erreur", "Joueur dupliqué: " + fn + " " + ln);
+                showAlert(Alert.AlertType.ERROR, "Erreur", "Joueur dupliqué dans l'équipe : " + fn + " " + ln);
                 return;
             }
+
+            for (Team existingTeam : reg.listTeams()) {
+                for (Player p : existingTeam.getPlayers()) {
+                    if (p.getFirstName().equalsIgnoreCase(fn) && p.getLastName().equalsIgnoreCase(ln)) {
+                        showAlert(Alert.AlertType.ERROR, "Erreur", "Le joueur " + fn + " " + ln + " est déjà inscrit dans une autre équipe.");
+                        return;
+                    }
+                }
+            }
+
             seen.add(key);
-        }
-        Team t = new Team(name);
-        for (Node node : playersBox.getChildren()) {
-            HBox r = (HBox) node;
-            String fn = ((TextField)r.getChildren().get(0)).getText().trim();
-            String ln = ((TextField)r.getChildren().get(1)).getText().trim();
             t.addPlayer(new Player(fn, ln));
         }
+
         try {
             reg.registerTeam(t);
             refreshCards();

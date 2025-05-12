@@ -8,4 +8,6 @@ module ui.volleyregistration {
     exports exception;
 
     opens ui to javafx.fxml;
+    exports terminal;
+    opens terminal to javafx.fxml;
 }
