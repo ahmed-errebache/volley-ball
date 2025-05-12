@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ui.MainController"
+            stylesheets="@../styles.css"
+            styleClass="border-pane">
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <top>
+        <VBox spacing="5" alignment="CENTER">
+            <Label text="Programmation Java - Exceptions" styleClass="header-label"/>
+            <Label text="Tournoi de volley-ball" styleClass="header-label"/>
+            <Label text="Ahmed Errebache &amp; Lucas Charpentier" styleClass="header-label"/>
+        </VBox>
+    </top>
+
+    <left>
+        <VBox spacing="15">
+            <Label text="1. Saisir le nom de l'équipe"/>
+            <TextField fx:id="teamNameField" promptText="Nom de l'équipe" styleClass="sport-input"/>
+
+            <Label text="2. Ajouter les joueurs (jusqu'à 6)"/>
+            <VBox fx:id="playersBox" spacing="8"/>
+            <Button text="Ajouter un joueur" onAction="#onAddPlayer" styleClass="sport-button"/>
+
+            <Button text="3. Créer l'équipe" onAction="#onCreateTeam" styleClass="sport-button"/>
+        </VBox>
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true">
+            <TilePane fx:id="cardsPane" styleClass="tile-pane"/>
+        </ScrollPane>
+    </center>
+</BorderPane>
