@@ -22,6 +22,7 @@ public class MainController {
     @FXML private VBox playersBox;
     @FXML private TilePane cardsPane;
     @FXML private Label countdownLabel;
+    @FXML private Button createTeamButton; // Bouton pour créer l'équipe
 
     private final TournamentRegistration reg = new TournamentRegistration();
     private int playerCount = 0;
@@ -31,6 +32,7 @@ public class MainController {
     public void initialize() {
         addPlayerRow();
         startCountdown();
+        // Le bouton reste actif, la vérification de la date limite se fait uniquement lors de la création d'équipe
     }
 
     private void startCountdown() {
@@ -45,19 +47,21 @@ public class MainController {
         LocalDateTime now = LocalDateTime.now();
         java.time.Duration duration = java.time.Duration.between(now, deadline);
 
-        if (!duration.isNegative()) {
-            long days = duration.toDays();
-            long hours = duration.toHours() % 24;
-            long minutes = duration.toMinutes() % 60;
-            long seconds = duration.getSeconds() % 60;
+        Platform.runLater(() -> {
+            if (!duration.isNegative()) {
+                long days = duration.toDays();
+                long hours = duration.toHours() % 24;
+                long minutes = duration.toMinutes() % 60;
+                long seconds = duration.getSeconds() % 60;
 
-            Platform.runLater(() -> countdownLabel.setText(
-                    String.format("⏳ Fin des inscriptions dans : %d j %02d h %02d min %02d s",
-                            days, hours, minutes, seconds)
-            ));
-        } else {
-            Platform.runLater(() -> countdownLabel.setText("❌ Inscriptions terminées."));
-        }
+                countdownLabel.setText(
+                        String.format("⏳ Fin des inscriptions dans : %d j %02d h %02d min %02d s",
+                                days, hours, minutes, seconds)
+                );
+            } else {
+                countdownLabel.setText("❌ Inscriptions terminées.");
+            }
+        });
     }
 
     @FXML
@@ -97,6 +101,12 @@ public class MainController {
 
     @FXML
     private void onCreateTeam() {
+        // Vérification de la date limite : on autorise l'affichage de l'UI mais on bloque la création
+        if (LocalDateTime.now().isAfter(deadline)) {
+            showAlert(Alert.AlertType.ERROR, "Erreur", "La date limite est dépassée. Vous ne pouvez plus créer de nouvelle équipe.");
+            return;
+        }
+
         String name = teamNameField.getText().trim();
         if (name.isEmpty()) {
             showAlert(Alert.AlertType.ERROR, "Erreur", "Le nom de l'équipe est requis.");
@@ -106,20 +116,19 @@ public class MainController {
             showAlert(Alert.AlertType.ERROR, "Erreur", "Veuillez ajouter exactement 6 joueurs remplis.");
             return;
         }
+
         Set<String> seen = new HashSet<>();
         Team t = new Team(name);
-
         for (Node node : playersBox.getChildren()) {
             HBox r = (HBox) node;
-            String fn = ((TextField)r.getChildren().get(0)).getText().trim();
-            String ln = ((TextField)r.getChildren().get(1)).getText().trim();
-            String key = fn.toLowerCase()+":"+ln.toLowerCase();
+            String fn = ((TextField) r.getChildren().get(0)).getText().trim();
+            String ln = ((TextField) r.getChildren().get(1)).getText().trim();
+            String key = fn.toLowerCase() + ":" + ln.toLowerCase();
 
             if (seen.contains(key)) {
                 showAlert(Alert.AlertType.ERROR, "Erreur", "Joueur dupliqué dans l'équipe : " + fn + " " + ln);
                 return;
             }
-
             for (Team existingTeam : reg.listTeams()) {
                 for (Player p : existingTeam.getPlayers()) {
                     if (p.getFirstName().equalsIgnoreCase(fn) && p.getLastName().equalsIgnoreCase(ln)) {
@@ -128,7 +137,6 @@ public class MainController {
                     }
                 }
             }
-
             seen.add(key);
             t.addPlayer(new Player(fn, ln));
         }
